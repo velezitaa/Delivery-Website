@@ -1,0 +1,40 @@
+---
+import Layout from "../layouts/Layout.astro";
+import ClientProductsList from "../components/client/ClientProductsList.astro";
+---
+
+<Layout>
+  <main
+    class="min-h-screen flex flex-column justify-center gap-4 px-4 max-w-7xl mx-auto md:items-center md:w-[70%]"
+  >
+    <div id="store-links-container" class="hidden gap-8">
+      <a
+        class="bg-lime-500 py-4 px-8 text-white no-underline text-center uppercase font-medium text-xl rounded-md hover:bg-lime-600 transition-all duration-200 ease-in"
+        href="/supermercados">Supermercados</a
+      >
+      <a
+        class="bg-lime-500 py-4 px-8 text-white no-underline text-center uppercase font-medium text-xl rounded-md hover:bg-lime-600 transition-all duration-200 ease-in"
+        href="/farmacias">Farmacias</a
+      >
+    </div>
+    <ClientProductsList />
+  </main>
+</Layout>
+
+<script>
+  // @ts-nocheck
+  import { productsFiltered } from "../components/products/products.module.js";
+
+  const storeLinksContainer = document.getElementById("store-links-container");
+
+  // Suscríbete a la tienda productsFiltered
+  productsFiltered.subscribe((filteredProducts) => {
+    // Si la lista de productos filtrados tiene elementos, oculta el div
+    if (filteredProducts.length > 0) {
+      storeLinksContainer.classList.add("hidden");
+    } else {
+      // Si la lista está vacía, muestra el div de nuevo
+      storeLinksContainer.classList.remove("hidden");
+    }
+  });
+</script>

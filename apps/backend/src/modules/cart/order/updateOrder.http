@@ -1,0 +1,5 @@
+PUT  http://localhost:3000/api/cart/order/6/1
+Content-Type: application/json
+{
+  "status": "preparado"
+}

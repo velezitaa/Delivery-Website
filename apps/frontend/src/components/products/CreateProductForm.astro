@@ -1,0 +1,165 @@
+<div
+  id="modal-fondo"
+  class="fixed top-0 left-0 w-full h-full backdrop-blur-xs backdrop-brightness-70 z-50 hidden items-center justify-center"
+>
+  <form
+    id="product-form"
+    class="bg-white p-6 rounded-md flex flex-col gap-4 border border-gray-300 md:w-[70%] lg:w-[50%]"
+  >
+    <h2 class="text-xl font-semibold mb-4">Añadir Nuevo Producto</h2>
+    <div class="flex flex-col gap-2">
+      <label for="name-input" class="font-medium">Nombre del Producto</label>
+      <div class="relative flex items-center w-full">
+        <input
+          type="text"
+          name="name-input"
+          id="name-input"
+          class="w-full rounded-md p-2 text-base ring-1 ring-gray-300 focus:outline-none focus:ring-indigo-500"
+          placeholder="Leche en polvo"
+        />
+        <span class="absolute right-2.5 hidden text-xl"></span>
+      </div>
+      <p class="text-xs font-light text-red-500 hidden">
+        El nombre no puede estar vacio.
+      </p>
+    </div>
+    <div class="flex flex-col gap-2">
+      <label for="price-input" class="font-medium">Precio</label>
+      <div class="relative flex items-center w-full">
+        <input
+          type="number"
+          name="price-input"
+          id="price-input"
+          class="w-full rounded-md p-2 text-base ring-1 ring-gray-300 focus:outline-none focus:ring-indigo-500"
+          placeholder="100"
+        />
+        <span class="absolute right-2.5 hidden text-xl"></span>
+      </div>
+      <p class="text-xs font-light text-red-500 hidden">
+        El precio debe ser un numero entero positivo.
+      </p>
+    </div>
+    <div class="flex justify-end gap-2">
+      <button
+        type="button"
+        id="cerrar-modal"
+        class="bg-gray-300 py-2 px-4 text-gray-700 text-center uppercase font-medium rounded-md"
+        >Cancelar</button
+      >
+      <button
+        id="product-form-btn"
+        disabled
+        class="bg-indigo-700 py-2 px-4 text-white text-center uppercase font-medium rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+        >Añadir Producto</button
+      >
+    </div>
+  </form>
+</div>
+
+<script>
+  // @ts-nocheck
+  import ProductsModule from "./products.module.js";
+  const inputName = document.querySelector("#name-input");
+  const inputPrice = document.querySelector("#price-input");
+  const form = document.querySelector("#product-form");
+  const formBtn = document.querySelector("#product-form-btn");
+  const modalFondo = document.querySelector("#modal-fondo");
+  const cerrarModalBtn = document.querySelector("#cerrar-modal");
+
+  // Validaciones del formulario
+  let nameValidation = false;
+  let priceValidation = false;
+
+  const renderValidation = (input, validation) => {
+    const helperText = input.parentElement.nextElementSibling;
+    const iconContainer = input.nextElementSibling;
+
+    if (input.value === "") {
+      input.classList.remove("input-invalid", "input-valid");
+      helperText?.classList.remove("show-helper-text");
+      iconContainer.innerHTML = "";
+      iconContainer.classList.remove("show");
+    } else if (validation) {
+      input.classList.add("input-valid");
+      input.classList.remove("input-invalid");
+      helperText?.classList.remove("show-helper-text");
+      iconContainer.innerHTML =
+        '<span class="iconify" data-icon="mdi:check-circle" style="color: green;"></span>';
+      iconContainer.classList.add("show");
+    } else {
+      input.classList.add("input-invalid");
+      input.classList.remove("input-valid");
+      helperText?.classList.add("show-helper-text");
+      iconContainer.innerHTML =
+        '<span class="iconify" data-icon="mdi:close-circle" style="color: red;"></span>';
+      iconContainer.classList.add("show");
+    }
+  };
+
+  const renderButtonState = () => {
+    if (nameValidation && priceValidation) {
+      formBtn.disabled = false;
+    } else {
+      formBtn.disabled = true;
+    }
+  };
+
+  inputName.addEventListener("input", (e) => {
+    nameValidation = e.target.value.trim().length > 0;
+    renderValidation(inputName, nameValidation);
+    renderButtonState();
+  });
+
+  inputPrice.addEventListener("input", (e) => {
+    // Validamos que sea un número positivo y mayor a cero.
+    const priceValue = parseInt(e.target.value);
+    priceValidation = !isNaN(priceValue) && priceValue > 0;
+    renderValidation(inputPrice, priceValidation);
+    renderButtonState();
+  });
+
+  // Conectar el formulario con mi módulo
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!nameValidation || !priceValidation) return;
+
+    try {
+      await ProductsModule.addProduct({
+        name: inputName.value,
+        price: parseInt(inputPrice.value),
+      });
+
+      modalFondo.classList.add("hidden");
+      form.reset();
+
+      // Reiniciamos el estado de las validaciones y del botón
+      nameValidation = false;
+      priceValidation = false;
+      renderButtonState();
+      renderValidation(inputName, nameValidation);
+      renderValidation(inputPrice, priceValidation);
+    } catch (error) {
+      console.log(error);
+      let description = "Error desconocido";
+      if (error.response) {
+        const errorData = await error.response.json();
+        description = errorData.error;
+      }
+      createNotification({
+        title: "Ups! Hubo un error",
+        description,
+        type: "error",
+      });
+    }
+  });
+
+  cerrarModalBtn.addEventListener("click", () => {
+    modalFondo.classList.add("hidden");
+    form.reset();
+    nameValidation = false;
+    priceValidation = false;
+    renderButtonState();
+    renderValidation(inputName, nameValidation);
+    renderValidation(inputPrice, priceValidation);
+  });
+</script>

@@ -1,0 +1,96 @@
+---
+import ProductItem from "./ProductItem.astro";
+---
+
+<ul
+  id="products-list"
+  class="m-0 p-2 list-none overflow-auto flex flex-col gap-8 rounded-md border border-gray-300 h-full md:w-[70%] lg:w-[50%]"
+>
+  <template id="product-item-template">
+    <ProductItem name="Lata de Atún" price={0} id={0} />
+  </template>
+</ul>
+
+<script>
+  // @ts-nocheck
+  import ky from "ky";
+  import { BACK_ENDPOINT } from "../../config/endpoints";
+  import ProductsModule, { products } from "./products.module.js";
+  const productsList = document.querySelector("#products-list");
+  const productItemTemplate = document.querySelector("#product-item-template");
+
+  await ProductsModule.getProducts();
+
+  // Subscripcion a los cambios en el estado de nanostores
+  products.subscribe((productsArray) => {
+    // Reiniciamos el estado de la lista
+    productsList.innerHTML = "";
+    for (const product of productsArray) {
+      // Clonamos el componente del li
+      const productItem =
+        productItemTemplate.content.cloneNode(true).children[0];
+      // Seleccionamos los inputs a reemplazar
+      const inputName = productItem.children[0].children[0];
+      const inputPrice = productItem.children[0].children[1].children[1];
+      // Editamos el li
+      productItem.id = product.id;
+      inputName.value = product.name;
+      inputPrice.value = product.price;
+      // Adjuntamos el nuevo li a la lista
+      productsList.append(productItem);
+    }
+  });
+
+  productsList.addEventListener("click", async (e) => {
+    const deleteBtn = e.target.closest(".delete-btn");
+    const editBtn = e.target.closest(".edit-btn");
+
+    if (deleteBtn) {
+      // 1. Encuentro el li
+      const li = deleteBtn.parentElement.parentElement;
+      // 2. Actualizo el array en js, usando el metodo filter para devolver todos los contactos excepto el que quiero eliminar.
+      await ProductsModule.removeProduct(li.id);
+    }
+
+    if (editBtn) {
+      // 1. Encuentro el li
+      const li = editBtn.parentElement.parentElement;
+      // 2. Obtener el status
+      const status = li.dataset.status;
+      // 3. Obtener los inputs
+      const productInputName = li.children[0].children[0];
+      const productInputPrice = li.children[0].children[1].children[1];
+      // 4. Obtener el boton
+      const productEditBtn = li.children[1].children[0];
+
+      if (status === "inputs-deshabilitados") {
+        // 1. Remover el readonly (No se puede editar) de los inputs.
+        productInputName.removeAttribute("readonly");
+        productInputPrice.removeAttribute("readonly");
+        // 2. Cambiar el status a inputs-habilitados
+        li.dataset.status = "inputs-habilitados";
+        // 3. Cambiar icono del boton para reflejar el estado
+        productEditBtn.children[0].classList.add("hidden");
+        productEditBtn.children[1].classList.remove("hidden");
+      } else {
+        // status === 'inputs-habilitados'
+        // 1. Agregar el readonly (No se puede editar) de los inputs.
+        productInputName.setAttribute("readonly", true);
+        productInputPrice.setAttribute("readonly", true);
+        // 2. Cambiar el status a inputs-deshabilitados
+        li.dataset.status = "inputs-deshabilitados";
+        // 3. Cambiar icono del boton para reflejar el estado
+        productEditBtn.children[0].classList.remove("hidden");
+        productEditBtn.children[1].classList.add("hidden");
+
+        // 4. Actualizar el producto
+        const productToUpdate = {
+          id: li.id,
+          name: productInputName.value,
+          price: parseInt(productInputPrice.value),
+        };
+        await ProductsModule.updateProduct(productToUpdate);
+      }
+    }
+  });
+</script>

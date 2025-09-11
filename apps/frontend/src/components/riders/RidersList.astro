@@ -1,0 +1,91 @@
+---
+import RiderItem from "./RiderItem.astro";
+---
+
+<ul
+  id="riders-list"
+  class="m-0 p-2 list-none overflow-auto flex flex-col gap-8 rounded-md border border-gray-300 h-full md:w-[70%] lg:w-[50%]"
+>
+  <template id="rider-item-template">
+    <RiderItem email="ejemplo123@email.com" role="repartidor" id={0} />
+  </template>
+</ul>
+
+<script>
+  // @ts-nocheck
+  import ky from "ky";
+  import { BACK_ENDPOINT } from "../../config/endpoints";
+  import RidersModule, { riders } from "./riders.module.js";
+  const ridersList = document.querySelector("#riders-list");
+  const riderItemTemplate = document.querySelector("#rider-item-template");
+
+  await RidersModule.getRiders();
+
+  // Subscripcion a los cambios en el estado de nanostores
+  riders.subscribe((ridersArray) => {
+    // Reiniciamos el estado de la lista
+    ridersList.innerHTML = "";
+    console.log(ridersArray);
+
+    for (const rider of ridersArray) {
+      // Clonamos el componente del li
+      const riderItem = riderItemTemplate.content.cloneNode(true).children[0];
+      // Seleccionamos los inputs a reemplazar
+      const inputEmail = riderItem.children[0].children[0];
+      // Editamos el li
+      riderItem.id = rider.id;
+      inputEmail.value = rider.email;
+      // Adjuntamos el nuevo li a la lista
+      ridersList.append(riderItem);
+    }
+  });
+
+  ridersList.addEventListener("click", async (e) => {
+    const deleteBtn = e.target.closest(".delete-btn");
+    const editBtn = e.target.closest(".edit-btn");
+
+    if (deleteBtn) {
+      // 1. Encuentro el li
+      const li = deleteBtn.parentElement.parentElement;
+      // 2. Actualizo el array en js, usando el metodo filter para devolver todos los contactos excepto el que quiero eliminar.
+      await RidersModule.removeRider(li.id);
+    }
+
+    if (editBtn) {
+      // 1. Encuentro el li
+      const li = editBtn.parentElement.parentElement;
+      // 2. Obtener el status
+      const status = li.dataset.status;
+      // 3. Obtener los inputs
+      const riderInputEmail = li.children[0].children[0];
+      // 4. Obtener el boton
+      const riderEditBtn = li.children[1].children[0];
+
+      if (status === "inputs-deshabilitados") {
+        // 1. Remover el readonly (No se puede editar) de los inputs.
+        riderInputEmail.removeAttribute("readonly");
+        // 2. Cambiar el status a inputs-habilitados
+        li.dataset.status = "inputs-habilitados";
+        // 3. Cambiar icono del boton para reflejar el estado
+        riderEditBtn.children[0].classList.add("hidden");
+        riderEditBtn.children[1].classList.remove("hidden");
+      } else {
+        // status === 'inputs-habilitados'
+        // 1. Agregar el readonly (No se puede editar) de los inputs.
+        riderInputEmail.setAttribute("readonly", true);
+        // 2. Cambiar el status a inputs-deshabilitados
+        li.dataset.status = "inputs-deshabilitados";
+        // 3. Cambiar icono del boton para reflejar el estado
+        riderEditBtn.children[0].classList.remove("hidden");
+        riderEditBtn.children[1].classList.add("hidden");
+
+        // 4. Actualizar el repartidor
+        const riderToUpdate = {
+          id: li.id,
+          email: riderInputEmail.value,
+        };
+        await RidersModule.updateRider(riderToUpdate);
+      }
+    }
+  });
+</script>

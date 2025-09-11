@@ -1,0 +1,192 @@
+<div
+  id="modal-fondo"
+  class="fixed top-0 left-0 w-full h-full backdrop-blur-xs backdrop-brightness-70 z-50 hidden items-center justify-center"
+>
+  <form
+    id="payment-methods-form"
+    class="bg-white p-6 rounded-md flex flex-col gap-4 border border-gray-300 md:w-[70%] lg:w-[50%]"
+  >
+    <h2 class="text-xl font-semibold mb-4">Añadir Nuevo Método de Pago</h2>
+    <div class="flex flex-col gap-2">
+      <label for="bank-input" class="font-medium">Nombre del Método de Pago</label>
+      <div class="relative flex items-center w-full">
+        <input
+          type="text"
+          name="bank-input"
+          id="bank-input"
+          class="w-full rounded-md p-2 text-base ring-1 ring-gray-300 focus:outline-none focus:ring-indigo-500"
+          placeholder="Mercantil"
+        />
+        <span class="absolute right-2.5 hidden text-xl"></span>
+      </div>
+      <p class="text-xs font-light text-red-500 hidden">
+        El campo no puede estar vacio.
+      </p>
+    </div>
+    <div class="flex flex-col gap-2">
+      <label for="phone-input" class="font-medium">Número de Teléfono</label>
+      <div class="relative flex items-center w-full">
+        <input
+          type="text"
+          name="phone-input"
+          id="phone-input"
+          class="w-full rounded-md p-2 text-base ring-1 ring-gray-300 focus:outline-none focus:ring-indigo-500"
+          placeholder="04161234567"
+        />
+        <span class="absolute right-2.5 hidden text-xl"></span>
+      </div>
+      <p class="text-xs font-light text-red-500 hidden">
+        Tiene que ser un número venezolano válido.
+      </p>
+    </div>
+     <div class="flex flex-col gap-2">
+      <label for="cedula-input" class="font-medium">Cédula de Identidad</label>
+      <div class="relative flex items-center w-full">
+        <input
+          type="text"
+          name="cedula-input"
+          id="cedula-input"
+          class="w-full rounded-md p-2 text-base ring-1 ring-gray-300 focus:outline-none focus:ring-indigo-500"
+          placeholder="31234567"
+        />
+        <span class="absolute right-2.5 hidden text-xl"></span>
+      </div>
+      <p class="text-xs font-light text-red-500 hidden">
+       El campo no puede estar vacio.
+      </p>
+    </div>
+    <div class="flex justify-end gap-2">
+      <button
+        type="button"
+        id="cerrar-modal"
+        class="bg-gray-300 py-2 px-4 text-gray-700 text-center uppercase font-medium rounded-md"
+        >Cancelar</button
+      >
+      <button
+        id="payment-methods-form-btn"
+        disabled
+        class="bg-indigo-700 py-2 px-4 text-white text-center uppercase font-medium rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+        >Añadir Método de Pago</button
+      >
+    </div>
+  </form>
+</div>
+
+<script>
+  // @ts-nocheck
+  import { createNotification } from "../../features/notifications/notification";
+  import paymentMethodsModule from "./paymentMethods.module";
+  const inputBank = document.querySelector("#bank-input");
+  const inputPhone = document.querySelector("#phone-input");
+  const inputCedula = document.querySelector("#cedula-input");
+  const form = document.querySelector("#payment-methods-form");
+  const formBtn = document.querySelector("#payment-methods-form-btn");
+  const modalFondo = document.querySelector("#modal-fondo");
+  const cerrarModalBtn = document.querySelector("#cerrar-modal");
+
+  // Validaciones del formulario
+  let bankValidation = false;
+  let phoneValidation = false;
+  let cedulaValidation = false;
+
+
+  const renderValidation = (input, validation) => {
+    const helperText = input.parentElement.nextElementSibling;
+    const iconContainer = input.nextElementSibling;
+
+    if (input.value === "") {
+      input.classList.remove("input-invalid", "input-valid");
+      helperText?.classList.remove("show-helper-text");
+      iconContainer.innerHTML = "";
+      iconContainer.classList.remove("show");
+    } else if (validation) {
+      input.classList.add("input-valid");
+      input.classList.remove("input-invalid");
+      helperText?.classList.remove("show-helper-text");
+      iconContainer.innerHTML =
+        '<span class="iconify" data-icon="mdi:check-circle" style="color: green;"></span>';
+      iconContainer.classList.add("show");
+    } else {
+      input.classList.add("input-invalid");
+      input.classList.remove("input-valid");
+      helperText?.classList.add("show-helper-text");
+      iconContainer.innerHTML =
+        '<span class="iconify" data-icon="mdi:close-circle" style="color: red;"></span>';
+      iconContainer.classList.add("show");
+    }
+  };
+
+  const renderButtonState = () => {
+    if (bankValidation && phoneValidation && cedulaValidation) {
+      formBtn.disabled = false;
+    } else {
+      formBtn.disabled = true;
+    }
+  };
+
+    inputBank.addEventListener("input", (e) => {
+        bankValidation = e.target.value.trim().length > 0;
+        renderValidation(inputBank, bankValidation);
+        renderButtonState();
+    });
+    inputPhone.addEventListener("input", (e) => {
+        phoneValidation = e.target.value.length === 11;
+        renderValidation(inputPhone, phoneValidation);
+        renderButtonState();
+    });
+    inputCedula.addEventListener("input", (e) => {
+        cedulaValidation = e.target.value.length >= 7 && e.target.value.length <= 8;
+        renderValidation(inputCedula, cedulaValidation);
+        renderButtonState();
+    });
+
+  // Conectar el formulario con mi módulo
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!bankValidation || !phoneValidation || !cedulaValidation) return;
+
+    try {
+      await paymentMethodsModule.addPaymentMethod({
+        bank: inputBank.value,
+        phone: inputPhone.value,
+        cedula: inputCedula.value,
+      });
+
+      modalFondo.classList.add("hidden");
+      form.reset();
+
+      // Reiniciamos el estado de las validaciones y del botón
+      bankValidation = false;
+      phoneValidation = false;
+      cedulaValidation = false;
+      renderButtonState();
+      renderValidation(inputBank, bankValidation);
+      renderValidation(inputPhone, phoneValidation);
+      renderValidation(inputCedula, cedulaValidation);
+    } catch (error) {
+      console.log(error);
+      let description = "Error desconocido";
+      if (error.response) {
+        const errorData = await error.response.json();
+        description = errorData.error;
+      }
+      createNotification({
+        title: "Ups! Hubo un error",
+        description,
+        type: "error",
+      });
+    }
+  });
+
+  cerrarModalBtn.addEventListener("click", () => {
+    modalFondo.classList.add("hidden");
+    form.reset();
+    bankValidation = false;
+    phoneValidation = false;
+    cedulaValidation
+    renderButtonState();
+    renderValidation(inputBank, bankValidation);
+    renderValidation(inputPhone, phoneValidation);
+    renderValidation(inputCedula, cedulaValidation);
+  });
+</script>

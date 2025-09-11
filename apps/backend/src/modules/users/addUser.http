@@ -1,0 +1,8 @@
+POST http://localhost:3000/api/users/repartidor
+Content-Type: application/json
+
+{
+  "email": "repartidor1@email.com",
+  "password": "Contrasena1$",
+  "role": "repartidor"
+}

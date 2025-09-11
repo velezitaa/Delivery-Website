@@ -1,0 +1,103 @@
+---
+import PaymentMethodItem from "./PaymentMethodItem.astro";
+---
+
+<ul
+  id="payment-methods-list"
+  class="m-0 p-2 list-none overflow-auto flex flex-col gap-8 rounded-md border border-gray-300 h-full md:w-[70%] lg:w-[50%]"
+>
+  <template id="payment-method-item-template">
+    <PaymentMethodItem bank="Banesco" phone="04166141129" cedula="31742897" id={0} />
+  </template>
+</ul>
+
+<script>
+  // @ts-nocheck
+  import ky from "ky";
+  import { BACK_ENDPOINT } from "../../config/endpoints";
+  import paymentMethodsModule, { paymentMethods } from "./paymentMethods.module";
+  const paymentMethodsList = document.querySelector("#payment-methods-list");
+  const paymentMethodsItemTemplate = document.querySelector("#payment-method-item-template");
+
+  await paymentMethodsModule.getPaymentMethods();
+
+  // Subscripcion a los cambios en el estado de nanostores
+  paymentMethods.subscribe((paymentMethodsArray) => {
+    // Reiniciamos el estado de la lista
+    paymentMethodsList.innerHTML = "";
+    for (const paymentMethods of paymentMethodsArray) {
+      // Clonamos el componente del li
+      const paymentMethodItem =
+        paymentMethodsItemTemplate.content.cloneNode(true).children[0];
+      // Seleccionamos los inputs a reemplazar
+      const inputBank = paymentMethodItem.children[0].children[0];
+      const inputPhone = paymentMethodItem.children[0].children[1];
+      const inputCedula = paymentMethodItem.children[0].children[2];
+      // Editamos el li
+      paymentMethodItem.id = paymentMethods.id;
+      inputBank.value = paymentMethods.bank;
+      inputPhone.value = paymentMethods.phone;
+      inputCedula.value = paymentMethods.cedula;
+      // Adjuntamos el nuevo li a la lista
+      paymentMethodsList.append(paymentMethodItem);
+    }
+  });
+
+  paymentMethodsList.addEventListener("click", async (e) => {
+    const deleteBtn = e.target.closest(".delete-btn");
+    const editBtn = e.target.closest(".edit-btn");
+
+    if (deleteBtn) {
+      // 1. Encuentro el li
+      const li = deleteBtn.parentElement.parentElement;
+      // 2. Actualizo el array en js, usando el metodo filter para devolver todos los contactos excepto el que quiero eliminar.
+      await paymentMethodsModule.removePaymentMethod(li.id);
+    }
+
+    if (editBtn) {
+      // 1. Encuentro el li
+      const li = editBtn.parentElement.parentElement;
+      // 2. Obtener el status
+      const status = li.dataset.status;
+      // 3. Obtener los inputs
+      const paymentMethodInputBank = li.children[0].children[0];
+      const paymentMethodInputPhone = li.children[0].children[1];
+      const paymentMethodInputCedula = li.children[0].children[2];
+      // 4. Obtener el boton
+      const paymentMethodsEditBtn = li.children[1].children[0];
+
+      if (status === "inputs-deshabilitados") {
+        // 1. Remover el readonly (No se puede editar) de los inputs.
+        paymentMethodInputBank.removeAttribute("readonly");
+        paymentMethodInputPhone.removeAttribute("readonly");
+        paymentMethodInputCedula.removeAttribute("readonly");
+        // 2. Cambiar el status a inputs-habilitados
+        li.dataset.status = "inputs-habilitados";
+        // 3. Cambiar icono del boton para reflejar el estado
+        paymentMethodsEditBtn.children[0].classList.add("hidden");
+        paymentMethodsEditBtn.children[1].classList.remove("hidden");
+
+      } else {
+        // status === 'inputs-habilitados'
+        // 1. Agregar el readonly (No se puede editar) de los inputs.
+        paymentMethodInputBank.setAttribute("readonly", true);
+        paymentMethodInputPhone.setAttribute("readonly", true);
+        paymentMethodInputCedula.setAttribute("readonly", true);
+        // 2. Cambiar el status a inputs-deshabilitados
+        li.dataset.status = "inputs-deshabilitados";
+        // 3. Cambiar icono del boton para reflejar el estado
+        paymentMethodsEditBtn.children[0].classList.remove("hidden");
+        paymentMethodsEditBtn.children[1].classList.add("hidden");
+
+        // 4. Actualizar el contacto
+        const paymentMethodToUpdate = {
+          id: li.id,
+          bank: paymentMethodInputBank.value,
+          phone: paymentMethodInputPhone.value,
+          cedula: paymentMethodInputCedula.value,
+        };
+        await paymentMethodsModule.updatePaymentMethod(paymentMethodToUpdate);
+      }
+    }
+  });
+</script>

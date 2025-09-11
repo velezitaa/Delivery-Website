@@ -1,0 +1,22 @@
+{
+  "name": "client",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/node": "^9.4.3",
+    "@iconify-json/mdi": "^1.2.3",
+    "@tailwindcss/vite": "^4.1.11",
+    "astro": "^5.12.3",
+    "astro-icon": "^1.1.5",
+    "flowbite": "^3.1.2",
+    "ky": "^1.8.2",
+    "nanostores": "^1.0.1",
+    "tailwindcss": "^4.1.11"
+  }
+}

@@ -1,0 +1,42 @@
+---
+import logoPng from "../assets/logo.png";
+import CartIcon from "../features/cart/CartIcon.astro";
+import MobileMenuButton from "../components/ui/MobileMenuButton.astro";
+import SignUpButton from "../components/ui/SignUpButton.astro";
+import SearchFormDesktop from "../features/search/SearchFormDesktop.astro";
+import SearchFormMobile from "../features/search/SearchFormMobile.astro";
+import AddressBar from "../components/ui/AddressBar.astro";
+---
+
+<nav class="bg-lime-500 text-white fixed top-0 left-0 right-0 z-50">
+  <div
+    class="max-w-7xl mx-auto h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8"
+  >
+    <div class="flex items-center gap-2 h-full">
+      <img class="w-8 h-8" src={logoPng.src} alt="logo" />
+      <a class="font-medium text-xl" href="/">Ding Dong!</a>
+    </div>
+
+    <div class="hidden md:flex flex-grow justify-center px-4">
+      <SearchFormDesktop />
+    </div>
+
+    <div class="flex items-center gap-4">
+      <CartIcon />
+
+      <MobileMenuButton />
+
+      <a
+        class="hidden md:block text-white no-underline hover:text-neutral-100"
+        href="/historial">Historial</a
+      >
+      <SignUpButton />
+    </div>
+  </div>
+</nav>
+
+<AddressBar />
+
+<div class="bg-neutral-100 p-4 md:hidden">
+  <SearchFormMobile />
+</div>

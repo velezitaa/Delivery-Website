@@ -1,0 +1,134 @@
+---
+import CartItem from "./CartItem.astro";
+---
+
+<ul
+  id="products-cart-list"
+  class="m-0 p-2 list-none overflow-auto flex flex-col gap-8 rounded-md border border-gray-300 h-full md:w-[70%] lg:w-[50%]"
+>
+  <template id="product-cart-item-template">
+    <CartItem product={{ id: 0, name: "", price: 0 }} quantity={0} />
+  </template>
+</ul>
+
+<script>
+  // @ts-nocheck
+  import CartModule from "./cart.module.js";
+  import cart from "./cart.module.js";
+  import ProductsModule from "../../../components/products/products.module.js";
+  import { createNotification } from "../../notifications/notification.js";
+  const productsCartList = document.querySelector("#products-cart-list");
+  const productCartItemTemplate = document.querySelector(
+    "#product-cart-item-template"
+  );
+
+  // console.log("hola");
+
+  // await ProductsModule.getProducts();
+  console.log(
+    "Productos desde ProductsModule en HOLAAAA:",
+    await ProductsModule.getProducts()
+  );
+
+  const cartProducts = await CartModule.getCartFromLocalStorage();
+
+  console.log("Carrito desde localStorage en CartList:", cartProducts);
+
+  const renderProductsFromCart = (cartProducts) => {
+    productsCartList.innerHTML = "<h1>hola</h1>";
+    cartProducts.forEach((product) => {
+      const CartItem = productCartItemTemplate.content.cloneNode(true);
+      CartItem.querySelector("h3").textContent = product.name;
+      CartItem.querySelector("p").textContent = `$${product.price}`;
+      CartItem.querySelector(".decrease-quantity-btn").dataset.productId =
+        product.id;
+      CartItem.querySelector(".increase-quantity-btn").dataset.productId =
+        product.id;
+      CartItem.querySelector(".remove-item-btn").dataset.productId = product.id;
+      productsCartList.appendChild(CartItem);
+    });
+  };
+  renderProductsFromCart();
+
+  // Nos suscribimos al store 'cart' para reaccionar a los cambios
+  cart.subscribe(
+    (cart) => {
+      const decreaseBtn = CartItem.querySelector(".decrease-quantity-btn");
+      const increaseBtn = CartItem.querySelector(".increase-quantity-btn");
+      const removeBtn = CartItem.querySelector(".remove-item-btn");
+
+      // 4. Añadimos los event listeners a los botones del item
+      decreaseBtn.addEventListener("click", () => {
+        cartService.updateProductQuantity(product.id, product.quantity - 1);
+      });
+
+      increaseBtn.addEventListener("click", () => {
+        cartService.updateProductQuantity(product.id, product.quantity + 1);
+      });
+
+      removeBtn.addEventListener("click", () => {
+        cartService.removeProductFromCart(product.id);
+        createNotification({
+          title: "Producto Eliminado",
+          description: "El producto se ha eliminado de tu carrito.",
+          type: "success",
+        });
+      });
+
+      // 5. Agregamos el item a la lista
+      productsCartList.appendChild(productItem);
+    }
+
+    //   if (products.length === 0) {
+    //     // Si no hay productos, mostramos un mensaje
+    //     const emptyMessage = document.createElement("li");
+    //     emptyMessage.textContent = "Aún no has agregado productos a tu carrito.";
+    //     emptyMessage.classList.add("text-center", "text-gray-500");
+    //     productsList.appendChild(emptyMessage);
+    //   } else {
+    //     // Si hay productos, iteramos sobre ellos y los renderizamos
+    //     for (const product of products) {
+    //       // 2. Clonamos el template del item del carrito
+    //       const productItem = productItemTemplate.content.cloneNode(true).children[0];
+
+    //       // 3. Editamos los elementos clonados con los datos del producto
+    //       const nameElement = productItem.querySelector("h3");
+    //       const priceElement = productItem.querySelector("p");
+    //       const quantitySpan = productItem.querySelector(".quantity");
+    //       const decreaseBtn = productItem.querySelector(".decrease-quantity-btn");
+    //       const increaseBtn = productItem.querySelector(".increase-quantity-btn");
+    //       const removeBtn = productItem.querySelector(".remove-item-btn");
+
+    //       // Actualizamos el contenido y los atributos
+    //       productItem.dataset.productId = product.id;
+    //       nameElement.textContent = product.name;
+    //       priceElement.textContent = `$${product.price.toFixed(2)}`;
+    //       quantitySpan.textContent = product.quantity;
+
+    //       // 4. Añadimos los event listeners a los botones del item
+    //       decreaseBtn.addEventListener("click", () => {
+    //         cartService.updateProductQuantity(product.id, product.quantity - 1);
+    //       });
+
+    //       increaseBtn.addEventListener("click", () => {
+    //         cartService.updateProductQuantity(product.id, product.quantity + 1);
+    //       });
+
+    //       removeBtn.addEventListener("click", () => {
+    //         cartService.removeProductFromCart(product.id);
+    //         createNotification({
+    //           title: "Producto Eliminado",
+    //           description: "El producto se ha eliminado de tu carrito.",
+    //           type: "success",
+    //         });
+    //       });
+
+    //       // 5. Agregamos el item a la lista
+    //       productsList.appendChild(productItem);
+    //     }
+    //   }
+    // });
+
+    // console.log("CartList.astro se está ejecutando en el cliente.");
+  );
+</script>

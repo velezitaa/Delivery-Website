@@ -1,0 +1,170 @@
+<div
+  id="modal-fondo"
+  class="fixed top-0 left-0 w-full h-full backdrop-blur-xs backdrop-brightness-70 z-50 hidden items-center justify-center"
+>
+  <form
+    id="rider-form"
+    class="bg-white p-6 rounded-md flex flex-col gap-4 border border-gray-300 md:w-[70%] lg:w-[50%]"
+  >
+    <h2 class="text-xl font-semibold mb-4">Añadir Nuevo Repartidor</h2>
+    <div class="flex flex-col gap-2">
+      <label for="email-input" class="font-medium">Email del Repartidor</label>
+      <div class="relative flex items-center w-full">
+        <input
+          type="email"
+          name="email-input"
+          id="email-input"
+          class="w-full rounded-md p-2 text-base ring-1 ring-gray-300 focus:outline-none focus:ring-indigo-500"
+          placeholder="ejemplo123@email.com"
+        />
+        <span class="absolute right-2.5 hidden text-xl"></span>
+      </div>
+      <p class="text-xs font-light text-red-500 hidden">
+        El correo no es válido
+      </p>
+    </div>
+    <div class="flex flex-col gap-2">
+      <label for="password-input" class="font-medium">Contraseña</label>
+      <div class="relative flex items-center w-full">
+        <input
+          type="password"
+          name="password-input"
+          id="password-input"
+          class="w-full rounded-md p-2 text-base ring-1 ring-gray-300 focus:outline-none focus:ring-indigo-500"
+          placeholder="••••••••"
+        />
+        <span class="absolute right-2.5 hidden text-xl"></span>
+      </div>
+      <p class="text-xs font-light text-red-500 hidden">
+        Debe tener al menos 6 caracteres e incluir una letra, un número y un
+        carácter especial
+      </p>
+    </div>
+    <div class="flex justify-end gap-2">
+      <button
+        type="button"
+        id="cerrar-modal"
+        class="bg-gray-300 py-2 px-4 text-gray-700 text-center uppercase font-medium rounded-md"
+        >Cancelar</button
+      >
+      <button
+        id="rider-form-btn"
+        disabled
+        class="bg-indigo-700 py-2 px-4 text-white text-center uppercase font-medium rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+        >Añadir Repartidor</button
+      >
+    </div>
+  </form>
+</div>
+
+<script>
+  // @ts-nocheck
+  import RidersModule from "./riders.module.js";
+  const inputEmail = document.querySelector("#email-input");
+  const inputPassword = document.querySelector("#password-input");
+  const form = document.querySelector("#rider-form");
+  const formBtn = document.querySelector("#rider-form-btn");
+  const modalFondo = document.querySelector("#modal-fondo");
+  const cerrarModalBtn = document.querySelector("#cerrar-modal");
+
+  const EMAIL_REGEX =
+    /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+  const PASSWORD_REGEX =
+    /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{6,}$/;
+
+  // Validaciones del formulario
+
+  let emailValidation = false;
+  let passwordValidation = false;
+
+  const renderValidation = (input, validation) => {
+    const helperText = input.parentElement.nextElementSibling;
+    const iconContainer = input.nextElementSibling;
+
+    if (input.value === "") {
+      input.classList.remove("input-invalid", "input-valid");
+      helperText?.classList.remove("show-helper-text");
+      iconContainer.innerHTML = "";
+      iconContainer.classList.remove("show");
+    } else if (validation) {
+      input.classList.add("input-valid");
+      input.classList.remove("input-invalid");
+      helperText?.classList.remove("show-helper-text");
+      iconContainer.innerHTML =
+        '<span class="iconify" data-icon="mdi:check-circle" style="color: green;"></span>';
+      iconContainer.classList.add("show");
+    } else {
+      input.classList.add("input-invalid");
+      input.classList.remove("input-valid");
+      helperText?.classList.add("show-helper-text");
+      iconContainer.innerHTML =
+        '<span class="iconify" data-icon="mdi:close-circle" style="color: red;"></span>';
+      iconContainer.classList.add("show");
+    }
+  };
+
+  const renderButtonState = () => {
+    if (emailValidation && passwordValidation) {
+      formBtn.disabled = false;
+    } else {
+      formBtn.disabled = true;
+    }
+  };
+
+  inputEmail.addEventListener("input", (e) => {
+    emailValidation = EMAIL_REGEX.test(e.target.value);
+    renderValidation(inputEmail, emailValidation);
+    renderButtonState();
+  });
+
+  inputPassword.addEventListener("input", (e) => {
+    passwordValidation = PASSWORD_REGEX.test(e.target.value);
+    renderValidation(inputPassword, passwordValidation);
+    renderButtonState();
+  });
+
+  // Conectar el formulario con mi módulo
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!emailValidation || !passwordValidation) return;
+
+    try {
+      await RidersModule.addRider({
+        email: inputEmail.value,
+        password: inputPassword.value,
+      });
+
+      modalFondo.classList.add("hidden");
+      form.reset();
+
+      // Reiniciamos el estado de las validaciones y del botón
+      emailValidation = false;
+      passwordValidation = false;
+      renderButtonState();
+      renderValidation(inputEmail, emailValidation);
+      renderValidation(inputPassword, passwordValidation);
+    } catch (error) {
+      console.log(error);
+      let description = "Error desconocido";
+      if (error.response) {
+        const errorData = await error.response.json();
+        description = errorData.error;
+      }
+      createNotification({
+        title: "Ups! Hubo un error",
+        description,
+        type: "error",
+      });
+    }
+  });
+
+  cerrarModalBtn.addEventListener("click", () => {
+    modalFondo.classList.add("hidden");
+    form.reset();
+    emailValidation = false;
+    passwordValidation = false;
+    renderButtonState();
+    renderValidation(inputEmail, emailValidation);
+    renderValidation(inputPassword, passwordValidation);
+  });
+</script>

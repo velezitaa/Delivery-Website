@@ -1,0 +1,50 @@
+---
+import ProductCard from "./ProductCard.astro";
+---
+
+<ul
+  id="products-list-client"
+  class="m-0 p-2 list-none overflow-auto flex-col gap-8 rounded-md h-full md:w-[70%] lg:w-[50%] hidden"
+>
+  <template id="product-item-template">
+    <ProductCard name="Lata de Atún" price={0} id={0} />
+  </template>
+</ul>
+
+<script>
+  // @ts-nocheck
+  import ProductsModule, {
+    productsFiltered,
+  } from "../products/products.module.js";
+
+  const productsList = document.querySelector("#products-list-client");
+  const productItemTemplate = document.querySelector("#product-item-template");
+
+  // Al cargar, obtenemos los productos y los guardamos en la tienda 'products'
+  // pero no los renderizamos.
+  await ProductsModule.getProducts();
+
+  const renderProducts = (productsToRender) => {
+    productsList.innerHTML = "";
+    productsToRender.forEach((product) => {
+      const productCard = productItemTemplate.content.cloneNode(true);
+      productCard.querySelector("h3").textContent = product.name;
+      productCard.querySelector("p").textContent = `$${product.price}`;
+      productCard.querySelector(".add-to-cart-btn").dataset.productId =
+        product.id;
+      productsList.appendChild(productCard);
+    });
+  };
+
+  // Escucha los cambios en la tienda de productos filtrados.
+  productsFiltered.subscribe((filteredProducts) => {
+    // Si hay productos filtrados, los renderizamos y mostramos la lista.
+    if (filteredProducts.length > 0) {
+      renderProducts(filteredProducts);
+      productsList.classList.remove("hidden");
+    } else {
+      // Si la lista de filtrados está vacía, ocultamos la lista.
+      productsList.classList.add("hidden");
+    }
+  });
+</script>

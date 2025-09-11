@@ -1,0 +1,7 @@
+PUT  http://localhost:3000/api/paymentMethods/2
+Content-Type: application/json
+{
+  "bank": "Bancamiga",
+  "phone": "04166141129",
+  "cedula": "31748046"
+}

@@ -1,0 +1,35 @@
+---
+import RidersList from '../../components/riders/RidersList.astro';
+import CreateRiderForm from '../../components/riders/CreateRiderForm.astro';
+import Layout from '../../layouts/Layout.astro';
+---
+
+<Layout title="Gestión de Repartidores">
+  <div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-8">Panel de Administración de Repartidores</h1>
+    
+    <div class="mb-4">
+      <button 
+        id="abrir-modal" 
+        class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+      >
+        Añadir Nuevo Repartidor
+      </button>
+    </div>
+    
+    <RidersList />
+  </div>
+  
+  <CreateRiderForm />
+</Layout>
+
+<script>
+  const abrirModalBtn = document.querySelector('#abrir-modal');
+  const modalFondo = document.querySelector('#modal-fondo');
+  
+  if (abrirModalBtn && modalFondo) {
+    abrirModalBtn.addEventListener('click', () => {
+      modalFondo.classList.remove('hidden');
+    });
+  }
+</script>

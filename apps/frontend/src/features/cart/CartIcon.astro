@@ -1,0 +1,18 @@
+---
+import { Icon } from "astro-icon/components";
+---
+
+<div>
+  <a
+    class="md:hidden flex items-center justify-center text-white no-underline hover:text-neutral-100"
+    href="/carrito"
+  >
+    <Icon name="mdi:cart-outline" class="w-7 h-7" is:inline />
+  </a>
+
+  <a
+    class="hidden md:block text-white no-underline hover:text-neutral-100"
+    href="/carrito"
+    ><Icon name="mdi:cart-outline" class="w-7 h-7" is:inline /></a
+  >
+</div>

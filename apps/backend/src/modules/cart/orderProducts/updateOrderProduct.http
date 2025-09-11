@@ -1,0 +1,6 @@
+PUT http://localhost:3000/api/cart/orderProducts/6/5
+Content-Type: application/json
+
+{
+  "newQuantity": 3
+}
