@@ -14,6 +14,8 @@ const CART_STORAGE_KEY = 'localCart';
  * @type {object}
  * @property {number} productId - El ID del producto.
  * @property {number} quantity - La cantidad del producto en el carrito.
+ * @property {string} name - El nombre del producto. 
+ * @property {number} price - El precio del producto. 
  */
 
 // Obtener el carrito de localStorage
@@ -37,14 +39,14 @@ const saveCartToLocalStorage = (cartData) => {
 };
 
 // Agregar un producto al carrito de localStorage
-const addProductToLocalStorage = ({ productId, quantity = 1 }) => {
+const addProductToLocalStorage = ({ productId, quantity = 1, name, price }) => {
   const currentCart = getCartFromLocalStorage();
   const existingProductIndex = currentCart.findIndex(item => item.productId === productId);
 
   if (existingProductIndex > -1) {
     currentCart[existingProductIndex].quantity += quantity;
   } else {
-    currentCart.push({ productId, quantity });
+    currentCart.push({ productId, quantity, name, price });
   }
 
   saveCartToLocalStorage(currentCart);
@@ -83,7 +85,11 @@ const removeProductFromLocalStorage = ({ productId }) => {
 const getCartFromDatabase = async (orderId) => {
   try {
     const productsInOrder = await ky.get(`${BASE_URL}/${orderId}`, { credentials: 'include' }).json();
-    return productsInOrder;
+    return productsInOrder.map(item => ({
+      ...item,
+      name: item.product_name,
+      price: item.product_price
+    }));
   } catch (error) {
     console.error("Error al obtener el carrito de la base de datos:", error);
     return [];
