@@ -16,7 +16,6 @@ import ProductCard from "./ProductCard.astro";
   import ProductsModule, {
     productsFiltered,
   } from "../products/products.module.js";
-
   const productsList = document.querySelector("#products-list-client");
   const productItemTemplate = document.querySelector("#product-item-template");
 
@@ -30,8 +29,12 @@ import ProductCard from "./ProductCard.astro";
       const productCard = productItemTemplate.content.cloneNode(true);
       productCard.querySelector("h3").textContent = product.name;
       productCard.querySelector("p").textContent = `$${product.price}`;
-      productCard.querySelector(".add-to-cart-btn").dataset.productId =
-        product.id;
+
+      const addButton = productCard.querySelector(".add-to-cart-btn");
+      addButton.dataset.productId = product.id;
+      addButton.dataset.productName = product.name;
+      addButton.dataset.productPrice = product.price;
+
       productsList.appendChild(productCard);
     });
   };

@@ -9,6 +9,8 @@ const { name, price, id } = Astro.props;
     <button
       class="add-to-cart-btn w-full py-2 px-4 text-sm font-medium text-white bg-lime-600 rounded-lg hover:bg-lime-700"
       data-product-id={id}
+      data-product-name={name}
+      data-product-price={price}
     >
       Añadir al carrito
     </button>
@@ -24,20 +26,20 @@ const { name, price, id } = Astro.props;
   addButtons.forEach((button) => {
     button.addEventListener("click", () => {
       const productId = Number(button.dataset.productId);
+      const productName = button.dataset.productName;
+      const productPrice = Number(button.dataset.productPrice);
 
       if (!isNaN(productId)) {
-        cartService.addProductToLocalStorage({ productId: productId });
+        cartService.addProductToLocalStorage({
+          productId: productId,
+          name: productName,
+          price: productPrice,
+        });
 
         createNotification({
           title: "Producto añadido",
           description: "El producto se ha agregado a tu carrito.",
           type: "success",
-        });
-      } else {
-        createNotification({
-          title: "Error",
-          description: "No se pudo añadir el producto al carrito.",
-          type: "error",
         });
       }
     });
