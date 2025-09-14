@@ -4,7 +4,19 @@ import { ErrorWithStatus } from '../../../utils/errorTypes.js';
 const getOrderProducts = async (orderId) => {
   const response = await db.query(
     `
-    SELECT * FROM order_products WHERE order_id = $1
+    SELECT
+      op.id,
+      op.order_id,
+      op.product_id,
+      op.quantity,
+      p.name AS product_name,
+      p.price AS product_price
+    FROM
+      order_products AS op
+    JOIN
+      products AS p ON op.product_id = p.id
+    WHERE
+      op.order_id = $1
   `,
     [orderId],
   );
