@@ -4,5 +4,5 @@ Content-Type: application/json
   "date": "2024-01-15T10:30:00Z",
   "status": "preparacion",
   "payment_method_id": 3,
-  "user_id": 24
+  "user_id": 2
 }
