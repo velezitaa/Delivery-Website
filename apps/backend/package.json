@@ -4,8 +4,11 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
+    "start": "NODE_ENV=prod node index.js",
     "dev": "cross-env NODE_ENV=dev node --watch -r dotenv/config index.js",
-    "tables:create": "cross-env NODE_ENV=dev node -r dotenv/config ./src/db/tables.js dev",
+    "prod": "cross-env NODE_ENV=prod node --watch -r dotenv/config index.js",
+    "tables:create:dev": "cross-env NODE_ENV=dev node -r dotenv/config ./src/db/tables.js dev",
+    "tables:create:prod": "cross-env NODE_ENV=prod node -r dotenv/config ./src/db/tables.js dev",
     "test": "vitest"
   },
   "author": "",
