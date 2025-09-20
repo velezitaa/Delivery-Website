@@ -1,0 +1,115 @@
+---
+import Layout from "../../layouts/Layout.astro";
+---
+
+<Layout title="Panel de Administrador - Pagos Pendientes">
+  <main class="container mx-auto p-4 md:p-8">
+    <h1 class="text-3xl font-bold text-center mb-8">
+      Pagos Pendientes de Revisión
+    </h1>
+
+    <div id="pending-orders-container" class="space-y-6 max-w-5xl mx-auto">
+      <p id="loading-message" class="text-center text-gray-500">
+        Cargando pagos pendientes...
+      </p>
+    </div>
+  </main>
+</Layout>
+
+<script>
+  // @ts-nocheck
+  import ordersModule, {
+    pendingOrders,
+  } from "../../features/orders/orders.module.js";
+
+  const container = document.getElementById("pending-orders-container");
+  const loadingMessage = document.getElementById("loading-message");
+
+  // Nos suscribimos al estado de las órdenes pendientes
+  pendingOrders.subscribe((orders) => {
+    loadingMessage.style.display = "none";
+    container.innerHTML = ""; // Limpiamos antes de renderizar
+
+    if (orders.length === 0) {
+      container.innerHTML =
+        '<p class="text-center text-gray-500">¡Excelente! No hay pagos pendientes por revisar.</p>';
+      return;
+    }
+
+    orders.forEach((order) => {
+      const card = document.createElement("div");
+      card.className =
+        "p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md border dark:border-gray-700";
+      card.dataset.orderId = order.id;
+
+      const orderDate = new Date(order.date).toLocaleString("es-VE", {
+        dateStyle: "medium",
+        timeStyle: "short",
+      });
+
+      card.innerHTML = `
+        <div class="flex flex-wrap justify-between items-start gap-4">
+          <div>
+            <h2 class="text-lg font-bold text-gray-900 dark:text-white">Orden #${order.id}</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400">${orderDate}</p>
+          </div>
+          <div class="text-right">
+            <p class="text-2xl font-bold text-lime-600">$${parseFloat(order.monto).toFixed(2)}</p>
+          </div>
+        </div>
+        <hr class="my-4 border-gray-200 dark:border-gray-600">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+          <div>
+            <p class="font-semibold text-gray-600 dark:text-gray-300">Usuario:</p>
+            <p class="text-gray-800 dark:text-gray-100">${order.user_email}</p>
+          </div>
+          <div>
+            <p class="font-semibold text-gray-600 dark:text-gray-300">Método de Pago:</p>
+            <p class="text-gray-800 dark:text-gray-100">${order.bank_name}</p>
+          </div>
+          <div>
+            <p class="font-semibold text-gray-600 dark:text-gray-300">Referencia:</p>
+            <p class="text-gray-800 dark:text-gray-100 font-mono">${order.payment_reference}</p>
+          </div>
+        </div>
+        <div class="mt-6 flex justify-end gap-3">
+          <button class="reject-btn px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700">
+            Rechazar
+          </button>
+          <button class="approve-btn px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700">
+            Aprobar
+          </button>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  });
+
+  // Delegación de eventos para manejar los clics en los botones
+  container.addEventListener("click", (e) => {
+    const target = e.target;
+    const orderCard = target.closest("[data-order-id]");
+    if (!orderCard) return;
+
+    const orderId = parseInt(orderCard.dataset.orderId);
+
+    if (target.classList.contains("approve-btn")) {
+      // Deshabilitamos los botones para evitar doble clic
+      orderCard
+        .querySelectorAll("button")
+        .forEach((btn) => (btn.disabled = true));
+      ordersModule.updatePaymentStatus(orderId, "aceptado");
+    }
+
+    if (target.classList.contains("reject-btn")) {
+      // Deshabilitamos los botones
+      orderCard
+        .querySelectorAll("button")
+        .forEach((btn) => (btn.disabled = true));
+      ordersModule.updatePaymentStatus(orderId, "rechazado");
+    }
+  });
+
+  // Carga inicial de datos al entrar a la página
+  ordersModule.getPendingOrders();
+</script>

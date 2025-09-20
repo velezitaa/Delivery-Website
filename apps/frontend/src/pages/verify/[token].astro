@@ -20,6 +20,7 @@ export const prerender = false;
   import { BACK_ENDPOINT } from "../../config/endpoints";
   const token = window.location.pathname.split("/verify/")[1];
   const verifyText = document.querySelector("#verify-text");
+  
   try {
     const data = await ky
       .patch(`${BACK_ENDPOINT}/api/users/verify`, { json: { token } })

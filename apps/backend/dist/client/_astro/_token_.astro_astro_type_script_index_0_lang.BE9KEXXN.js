@@ -1,1 +1,0 @@
-import{k as o}from"./index.B9b1t7QR.js";const a=window.location.pathname.split("/verify/")[1],e=document.querySelector("#verify-text");try{const t=await o.patch("http://localhost:3000/api/users/verify",{json:{token:a}}).json();e.innerHTML=t.message}catch(t){const r=await t.response.json();e.innerHTML=r.error}

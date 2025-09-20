@@ -1,0 +1,161 @@
+---
+import Layout from "../../layouts/Layout.astro";
+---
+
+<Layout title="Registrar Pago">
+  <main class="container mx-auto p-4 md:p-8 flex justify-center">
+    <div class="w-full max-w-lg">
+      <h1 class="text-3xl font-bold text-center mb-6">Información del Pago</h1>
+
+      <form
+        id="payment-form"
+        class="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md space-y-6"
+      >
+        <div>
+          <label
+            for="payment-method"
+            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+          >
+            Método de Pago
+          </label>
+          <select
+            id="payment-method"
+            name="payment_method_id"
+            class="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md"
+            required
+          >
+            <option value="">Cargando métodos de pago...</option>
+          </select>
+        </div>
+
+        <div>
+          <label
+            for="payment-reference"
+            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+          >
+            Últimos 4 dígitos de referencia
+          </label>
+          <input
+            type="text"
+            id="payment-reference"
+            name="payment_reference"
+            class="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md"
+            required
+            maxlength="4"
+            title="Debe contener 4 dígitos numéricos."
+          />
+        </div>
+
+        <div>
+          <label
+            for="monto"
+            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+          >
+            Monto a Pagar
+          </label>
+          <input
+            type="number"
+            id="monto"
+            name="monto"
+            class="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md"
+            required
+            step="0.01"
+          />
+        </div>
+
+        <button
+          type="submit"
+          class="w-full py-3 px-4 text-white bg-lime-600 rounded-lg hover:bg-lime-700 transition-colors"
+        >
+          Registrar Pago
+        </button>
+      </form>
+    </div>
+  </main>
+</Layout>
+
+<script>
+  // @ts-nocheck
+  import { cart } from "../../features/cart/components/cart.module.js";
+  import { createNotification } from "../../features/notifications/notification.js";
+  import paymentMethodsModule, {
+    paymentMethods,
+  } from "../../components/paymentMethods/paymentMethods.module.js";
+  import { createOrderWithProducts } from "../../features/orders/orders.module.js";
+  const paymentForm = document.querySelector("#payment-form");
+  const paymentMethodSelect = document.querySelector("#payment-method");
+  const montoInput = document.querySelector("#monto");
+
+  const totalFromCart = localStorage.getItem("cartTotal");
+  if (totalFromCart) {
+    montoInput.value = totalFromCart;
+  } else {
+    window.location.href = "/carrito";
+  }
+
+  const loadPaymentMethods = async () => {
+    try {
+      await paymentMethodsModule.getPaymentMethods();
+    } catch (error) {
+      console.error("Error al cargar los métodos de pago:", error);
+      createNotification({
+        title: "Error",
+        description: "No se pudieron cargar los métodos de pago.",
+        type: "error",
+      });
+    }
+  };
+
+  loadPaymentMethods();
+
+  paymentMethods.subscribe((methods) => {
+    if (methods.length === 0) return;
+
+    paymentMethodSelect.innerHTML =
+      '<option value="">Selecciona un método</option>';
+    methods.forEach((method) => {
+      const option = document.createElement("option");
+      option.value = method.id;
+      option.textContent = method.bank;
+      paymentMethodSelect.appendChild(option);
+    });
+  });
+
+  paymentForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const formData = new FormData(paymentForm);
+    const cartItems = JSON.parse(localStorage.getItem("localCart") || "[]");
+
+    const orderPayload = {
+      payment_method_id: parseInt(formData.get("payment_method_id")),
+      payment_reference: formData.get("payment_reference"),
+      monto: parseFloat(formData.get("monto")),
+      user_id: 1, // Esto debe ser el ID real del usuario autenticado
+      items: cartItems,
+    };
+
+    try {
+      // Llamamos a la función del módulo para manejar todo el proceso
+      const orderId = await createOrderWithProducts(orderPayload);
+      console.log("Order created with ID:", orderId);
+
+      // Si todo sale bien, muestra una notificación y limpia el carrito
+      createNotification({
+        title: "¡Pago Registrado!",
+        description:
+          'Tu pago está siendo procesado. Puedes ver el estado en "Mis Pedidos".',
+        type: "success",
+      });
+
+      localStorage.removeItem("localCart");
+      localStorage.removeItem("cartTotal");
+      cart.set([]);
+
+      window.location.href = "/client/my-orders";
+    } catch (error) {
+      // La notificación de error se maneja dentro de la función del módulo
+      console.error("Error en el formulario de pago:", error);
+    }
+  });
+</script>

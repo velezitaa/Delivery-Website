@@ -1,0 +1,2 @@
+GET  http://localhost:3000/api/cart/order/user/3
+# Este endpoint permite a un cliente obtener todos sus pedidos realizados previamente.

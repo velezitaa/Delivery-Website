@@ -1,0 +1,1 @@
+import{k as o}from"./index.B9b1t7QR.js";const n=window.location.pathname.split("/verify/")[1],r=document.querySelector("#verify-text");try{const e=await o.patch("https://delivery-website-ujth.onrender.com/api/users/verify",{json:{token:n}}).json();r.innerHTML=e.message}catch(e){const t=await e.response.json();r.innerHTML=t.error}

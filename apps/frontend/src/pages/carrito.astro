@@ -5,23 +5,10 @@ import CartList from "../features/cart/components/CartList.astro";
 
 <Layout title="Tu Carrito de Compras">
   <main class="container mx-auto p-4 md:p-8 space-y-8">
-    <!-- <h1
-      class="text-3xl font-bold text-gray-900 dark:text-white mb-6 text-center"
-    >
-      Tu Carrito de Compras
-    </h1> -->
-
     <div
       id="cart-container"
       class="flex flex-col lg:flex-row gap-8 items-start"
     >
-      <!-- <section class="flex-grow w-full space-y-4">
-        <div id="cart-items" class="space-y-4">
-          <p id="empty-cart-message" class="text-center text-gray-500">
-            Aún no has agregado productos a tu carrito
-          </p>
-        </div>
-      </section> -->
       <CartList />
 
       <aside
@@ -31,10 +18,6 @@ import CartList from "../features/cart/components/CartList.astro";
           Resumen del Pedido
         </h2>
         <div class="space-y-2">
-          <div class="flex justify-between text-gray-700 dark:text-gray-300">
-            <span>Subtotal:</span>
-            <span id="subtotal-price">$0.00</span>
-          </div>
           <div
             class="flex justify-between font-bold text-gray-900 dark:text-white"
           >
@@ -42,14 +25,58 @@ import CartList from "../features/cart/components/CartList.astro";
             <span id="total-price">$0.00</span>
           </div>
         </div>
-        <button
+        <a
           id="checkout-button"
-          class="w-full py-3 px-4 text-white bg-lime-600 rounded-lg hover:bg-lime-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-          disabled
+          href="/client/pago"
+          class="block text-center w-full py-3 px-4 text-white bg-lime-600 rounded-lg hover:bg-lime-700 transition-colors"
         >
           Proceder al Pago
-        </button>
+        </a>
+        <p
+          id="checkout-disabled-message"
+          class="text-center text-sm text-gray-500"
+        >
+          Agrega productos para proceder al pago.
+        </p>
       </aside>
     </div>
   </main>
 </Layout>
+
+<script>
+  // @ts-nocheck
+  import { cart } from "../features/cart/components/cart.module.js";
+
+  const totalPriceEl = document.querySelector("#total-price");
+  const checkoutButton = document.querySelector("#checkout-button");
+  const disabledMessage = document.querySelector("#checkout-disabled-message");
+
+  const updateTotal = (cartItems) => {
+    // Calculamos el total
+    const total = cartItems.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0
+    );
+
+    // Actualizamos el texto del total
+    totalPriceEl.textContent = `$${total.toFixed(2)}`;
+
+    // Guardamos el total en localStorage para usarlo en la página de pago
+    localStorage.setItem("cartTotal", total.toFixed(2));
+
+    // Habilitamos o deshabilitamos el botón de pago
+    if (cartItems.length > 0) {
+      checkoutButton.style.display = "block";
+      disabledMessage.style.display = "none";
+    } else {
+      checkoutButton.style.display = "none";
+      disabledMessage.style.display = "block";
+    }
+  };
+
+  // Nos suscribimos a los cambios del carrito para mantener el total actualizado
+  cart.subscribe(updateTotal);
+
+  // Llamamos una vez al inicio para establecer el estado inicial
+  updateTotal(cart.get());
+</script>

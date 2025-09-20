@@ -1,0 +1,100 @@
+---
+import Layout from "../../layouts/Layout.astro";
+---
+
+<Layout title="Mis Pedidos">
+  <main class="container mx-auto p-4 md:p-8">
+    <h1 class="text-3xl font-bold text-center mb-8">Historial de Pedidos</h1>
+
+    <div id="orders-container" class="space-y-4 max-w-4xl mx-auto">
+      <p id="loading-message">Cargando tus pedidos...</p>
+    </div>
+  </main>
+</Layout>
+
+<script>
+  // @ts-nocheck
+  // 1. Importar el módulo de órdenes y el estado (userOrders)
+  import ordersModule, {
+    userOrders,
+  } from "../../features/orders/orders.module.js";
+  import { createNotification } from "../../features/notifications/notification.js";
+
+  const ordersContainer = document.querySelector("#orders-container");
+  const loadingMessage = document.querySelector("#loading-message");
+
+  // Mapeo de estados a clases de Tailwind para los colores
+  const statusStyles = {
+    pendiente:
+      "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
+    aceptado:
+      "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
+    rechazado: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
+  };
+
+  function renderOrders(ordersData) {
+    // Limpiar el contenedor antes de renderizar
+    ordersContainer.innerHTML = "";
+
+    if (ordersData.length === 0) {
+      ordersContainer.innerHTML =
+        '<p class="text-center text-gray-500 dark:text-gray-400">No tienes pedidos registrados.</p>';
+      return;
+    }
+
+    ordersData.forEach((order) => {
+      const orderCard = document.createElement("div");
+      orderCard.className =
+        "p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md border dark:border-gray-700";
+
+      const statusClass =
+        statusStyles[order.payment_status] || "bg-gray-100 text-gray-800";
+
+      // Formatear la fecha para que sea más legible
+      const orderDate = new Date(order.date).toLocaleDateString("es-VE", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+
+      orderCard.innerHTML = `
+        <div class="flex justify-between items-center">
+          <div>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Pedido del ${orderDate}</p>
+            <p class="text-lg font-semibold text-gray-900 dark:text-white">$${parseFloat(order.monto).toFixed(2)}</p>
+          </div>
+          <span class="px-3 py-1 text-sm font-medium rounded-full ${statusClass}">
+            ${order.payment_status.charAt(0).toUpperCase() + order.payment_status.slice(1)}
+          </span>
+        </div>
+        <div class="mt-2 text-sm text-gray-600 dark:text-gray-300">
+          <span>Referencia: ****${order.payment_reference}</span>
+        </div>
+      `;
+      ordersContainer.appendChild(orderCard);
+    });
+  }
+
+  // 2. Suscribirse al estado `userOrders` para reaccionar a los cambios
+  userOrders.subscribe((orders) => {
+    if (orders.length > 0) {
+      renderOrders(orders);
+    } else {
+      // Si el array está vacío, mostrar mensaje de carga o de no pedidos
+      if (loadingMessage) {
+        loadingMessage.textContent = "No tienes pedidos registrados.";
+      }
+    }
+  });
+
+  // 3. Cargar las órdenes del usuario cuando la página se abra
+  async function loadUserOrders() {
+    // Por ahora, usamos el user_id fijo para la prueba
+    // TODO: Reemplazar con el ID del usuario autenticado
+    const userId = 1;
+    await ordersModule.getUserOrders(userId);
+  }
+
+  // Ejecutar la función de carga
+  loadUserOrders();
+</script>

@@ -1,0 +1,6 @@
+PATCH http://localhost:3000/api/cart/order/8/payment-status
+Content-Type: application/json
+
+{
+  "payment_status": "aceptado"
+}

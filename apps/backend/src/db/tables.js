@@ -46,13 +46,22 @@ const createOrderStatusType = async () => {
   `);
 };
 
+const createPaymentStatusType = async () => {
+  await db.query(`DROP TYPE IF EXISTS payment_status CASCADE`);
+  await db.query(`
+    CREATE TYPE payment_status AS enum ('pendiente', 'aceptado', 'rechazado')
+  `);
+};
+
 const createOrderTable = async () => {
   await db.query(`
   CREATE TABLE user_order (
   id SERIAL PRIMARY KEY,
   date TIMESTAMPTZ DEFAULT NOW(),
   status order_status,
+  payment_status payment_status DEFAULT 'pendiente',
   payment_reference TEXT, 
+  monto NUMERIC NOT NULL,
   payment_method_id INTEGER NOT NULL REFERENCES payment_method(id) ON DELETE SET NULL,
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE
     )
@@ -83,6 +92,7 @@ const createTables = async () => {
   await createProductsTable();
   await createPaymentMethodTable();
   await createOrderStatusType();
+  await createPaymentStatusType();
   await createOrderTable();
   await createOrderProductsTable();
   console.log('Tablas creadas correctamente');
